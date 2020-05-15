@@ -115,61 +115,63 @@ class Graph {
     return Array.from(seen);
   }
 
-  /** finds shortest path between two verteces */
-  shortestPath(graph, v1, v2) {
-    // need a step counter, findPath, canFind(T/F)
-    // DFS to set the baseline/max of leastSteps
-    // if canFind === true && iteration.steps < leastSteps
-    // recursive
-    // while toVisitStack.length BASE CASE
-    // findPath(graph, v1, v2, steps, canFind) RECURSE
-    // PROGRESS
-
-    /**helperFunction findPath(graph, v1, v2, visited=()){
-     * while (toVisitStack.length && steps < leastSteps){
-     * 
-     * if current=v2 return steps
-     * 
-     * if each of current.adjacent !visited.has(each) THEN push onto stack
-     * current = toVisit.pop
-     * steps ++
-     * return findPath
-     * }
-    }*/
-  }
-  // *****************************************************
   shortestPath(start, end) {
-    // just finds the first path. for Q,V it finds 
-    // as written in solution ["Q", "P", "X", "U", "V"] 
-    // BUT there's a shorter path! [Q,X,V]
+    /**  original: 
+     * for the points Q & V (5) ["Q", "P", "X", "U", "V"]
+     * for the points Q & Y (4) ["Q", "P", "X", "Y"]
+     * for the points Q & U (4) ["Q", "P", "X", "U"]
+     * 
+     * BUT there are a shorter paths
+     * for the points Q & V (3) ["Q", "X", "V"]
+     * for the points Q & Y (3) ["Q", "X", "Y"]
+     * for the points Q & U (3) ["Q", "X", "U"]
+     * 
+     * 
+     * changed the method to add the full nodes to the path array
+     * then do a check on the path before returning
+     * 
+     * TODO: for larger graph may have to do this check multiple times.
+     *      -have a condition for having done the check at all in on pass. 
+     *      -if true do another pass. I think we can do this recursively
+     * 
+     * also changed the method to do away with having to reverse the path
+      */
+    
     if (start === end) {
-      return [start.value];
+      return [start];
     }
 
     var queue = [start];
     let visited = new Set();
-    let predecessors = {};  // object of what? -- linked list of the path you take
-    let path = []; // returned with start on either side but doesn't show end
+    let predecessors = {};  // linked list of the path you take. NOW where values are Verteces
+    let path = []; // reworked the function to add the full nodes to the path array
     let ans;
 
     while (queue.length) {
       let currentVertex = queue.shift();
 
-      if (currentVertex === end) {  //when we reach the end
-        let stop = predecessors[end.value];  //
+      if (currentVertex === end) {  
+        let stop = predecessors[end.value]; 
         while (stop) {
-          path.push(stop);
-          stop = predecessors[stop];
+          path.unshift(stop);
+          stop = predecessors[stop.value];
         }
-        path.unshift(end.value);  //add start value to beginning of path... changed to end, was start
-        path.reverse();  // reverses the path array
-        return path;
+        path.push(end); 
+
+        //added check for redundant verteces in path
+        for (let vert in path) { 
+          let i = path.indexOf(vert)
+          // if vert and the nextItem both have the nextItemAfterThat in their adjacency lists, remove nextItem
+          if (vert.adjacent.includes(path[i + 2]) && path[i + 1].adjacent.includes(path[i + 2])) { path.splice(i+1,1)}
+        }
+        ans = path.map( v => v.value);
+        return ans;
       }
 
-      visited.add(currentVertex);  // when not at end keep track of where you've been 
+      visited.add(currentVertex);  
       for (let vertex of currentVertex.adjacent) {
-        if (!visited.has(vertex)) {  // if we haven't seen one of the adjacent verteces of the current node
-          predecessors[vertex.value] = currentVertex.value;  //
+        if (!visited.has(vertex)) {  
+          predecessors[vertex.value] = currentVertex; 
           queue.push(vertex);
         }
       }
